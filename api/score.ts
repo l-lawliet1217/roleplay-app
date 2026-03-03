@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-const GEMINI_MODEL = 'gemini-2.0-flash'
+const GEMINI_MODEL = 'gemini-2.5-flash'
 
 const SCORING_SYSTEM_PROMPT = `あなたはプレゼンテーション・営業ロールプレイの評価の専門家です。
 以下の会話ログを分析し、プレゼンターのパフォーマンスを評価してください。
