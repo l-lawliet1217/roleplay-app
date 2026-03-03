@@ -1,5 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+
+const GEMINI_MODEL = 'gemini-2.0-flash'
 
 const SCORING_SYSTEM_PROMPT = `あなたはプレゼンテーション・営業ロールプレイの評価の専門家です。
 以下の会話ログを分析し、プレゼンターのパフォーマンスを評価してください。
@@ -44,9 +45,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' })
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
   }
 
   const { conversation, scenario } = req.body
@@ -57,22 +58,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : '報告プレゼン（クライアントへの施策報告）'
 
   try {
-    const client = new Anthropic({ apiKey })
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SCORING_SYSTEM_PROMPT }] },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `【シナリオ】${scenarioContext}\n\n【会話ログ】\n${conversation}` }],
+            },
+          ],
+          generationConfig: { maxOutputTokens: 2048 },
+        }),
+      }
+    )
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      system: SCORING_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `【シナリオ】${scenarioContext}\n\n【会話ログ】\n${conversation}`,
-        },
-      ],
-    })
+    if (!response.ok) {
+      const body = await response.text()
+      throw new Error(`Gemini API error: ${response.status} ${body}`)
+    }
 
-    const textBlock = response.content.find(b => b.type === 'text')
-    res.status(200).json({ content: textBlock?.text || '{}' })
+    const data = await response.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
+    res.status(200).json({ content: text })
   } catch (error: any) {
     console.error('Score API error:', error)
     res.status(500).json({ error: error.message || 'Internal server error' })
