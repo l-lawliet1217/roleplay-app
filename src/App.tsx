@@ -35,10 +35,11 @@ export default function App() {
 
   const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null) => {
     setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId })
-    // CompleteConditionで分岐
-    if (completeCondition?.includes('テスト')) {
+    // CompleteConditionで分岐（プレゼン・ヒアリングはロープレへ、テストはクイズへ）
+    if (completeCondition?.includes('プレゼン') || completeCondition?.includes('ヒアリング')) {
+      setScreen('scenario')
+    } else if (completeCondition?.includes('テスト')) {
       if (manualRecordId) {
-        // マニュアル内容を自動取得してクイズ生成
         autoGenerateQuiz(manualRecordId)
       } else {
         setScreen('quiz-setup')
@@ -75,9 +76,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: contentData.content }),
       })
-      if (!quizRes.ok) throw new Error('テスト生成に失敗しました')
-
       const data = await quizRes.json()
+      if (!quizRes.ok) throw new Error(data.error || 'テスト生成に失敗しました')
       setQuizQuestions(data.questions)
       setScreen('quiz-play')
 
@@ -123,9 +123,8 @@ export default function App() {
         body: JSON.stringify({ text }),
       })
 
-      if (!res.ok) throw new Error('テスト生成に失敗しました')
-
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'テスト生成に失敗しました')
       setQuizQuestions(data.questions)
       setScreen('quiz-play')
     } catch (err) {
