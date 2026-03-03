@@ -71,7 +71,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               parts: [{ text: `【シナリオ】${scenarioContext}\n\n【会話ログ】\n${conversation}` }],
             },
           ],
-          generationConfig: { maxOutputTokens: 2048, responseMimeType: 'application/json' },
+          generationConfig: {
+            maxOutputTokens: 2048,
+            responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       }
     )
@@ -83,8 +87,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data = await response.json()
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
-    // Geminiがコードブロックで囲む場合のクリーニング
+    // コードブロック除去
     text = text.replace(/^```json\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+    // JSON部分だけ抽出（余計なテキストが混入した場合）
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      JSON.parse(jsonMatch[0]) // バリデーション
+      text = jsonMatch[0]
+    }
     res.status(200).json({ content: text })
   } catch (error: any) {
     console.error('Score API error:', error)
