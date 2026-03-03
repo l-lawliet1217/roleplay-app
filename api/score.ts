@@ -11,33 +11,18 @@ const SCORING_SYSTEM_PROMPT = `あなたはプレゼンテーション・営業�
 - コミュニケーション力: 相手への配慮、自信のある話し方、適切な言葉遣い
 
 必ず以下のJSON形式のみで回答してください。JSON以外のテキストは含めないでください。
+scoreは1〜100の整数、commentは50文字以内、summaryは150文字以内です。
 
 {
   "scores": {
-    "explanation": {
-      "score": <1-100の整数>,
-      "label": "説明のわかりやすさ",
-      "comment": "<50文字以内のコメント>"
-    },
-    "qa": {
-      "score": <1-100の整数>,
-      "label": "質疑応答の的確さ",
-      "comment": "<50文字以内のコメント>"
-    },
-    "communication": {
-      "score": <1-100の整数>,
-      "label": "コミュニケーション力",
-      "comment": "<50文字以内のコメント>"
-    },
-    "overall": {
-      "score": <1-100の整数>,
-      "label": "総合評価",
-      "comment": "<50文字以内のコメント>"
-    }
+    "explanation": { "score": 75, "label": "説明のわかりやすさ", "comment": "コメント" },
+    "qa": { "score": 70, "label": "質疑応答の的確さ", "comment": "コメント" },
+    "communication": { "score": 80, "label": "コミュニケーション力", "comment": "コメント" },
+    "overall": { "score": 75, "label": "総合評価", "comment": "コメント" }
   },
-  "strengths": ["<良かった点1>", "<良かった点2>", "<良かった点3>"],
-  "improvements": ["<改善点1>", "<改善点2>", "<改善点3>"],
-  "summary": "<150文字以内の総評>"
+  "strengths": ["良かった点1", "良かった点2", "良かった点3"],
+  "improvements": ["改善点1", "改善点2", "改善点3"],
+  "summary": "総評テキスト"
 }`
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -74,8 +59,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           generationConfig: {
             maxOutputTokens: 2048,
             responseMimeType: 'application/json',
-            thinkingConfig: { thinkingBudget: 0 },
           },
+          // thinkingConfigはgenerationConfigの外に置く
+          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     )
@@ -87,14 +73,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data = await response.json()
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
+
     // コードブロック除去
     text = text.replace(/^```json\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
-    // JSON部分だけ抽出（余計なテキストが混入した場合）
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      JSON.parse(jsonMatch[0]) // バリデーション
-      text = jsonMatch[0]
+
+    // JSON抽出・バリデーション
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        JSON.parse(jsonMatch[0])
+        text = jsonMatch[0]
+      }
+    } catch {
+      // パースに失敗してもtextをそのまま返す（フロント側でもフォールバックあり）
     }
+
     res.status(200).json({ content: text })
   } catch (error: any) {
     console.error('Score API error:', error)
