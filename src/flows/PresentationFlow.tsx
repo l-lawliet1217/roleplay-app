@@ -14,12 +14,13 @@ interface Props {
 }
 
 export function PresentationFlow({ member, watchId }: Props) {
-  const [screen, setScreen] = useState<Screen>(member && watchId ? 'scenario' : 'select')
+  const [screen, setScreen] = useState<Screen>('select')
   const [airtableSelect, setAirtableSelect] = useState<AirtableSelect>({
     memberId: '',
     watchId: '',
     completeCondition: null,
     manualRecordId: null,
+    manualName: '',
   })
   const [config, setConfig] = useState<AppConfig>({
     scenario: 'sales',
@@ -30,8 +31,8 @@ export function PresentationFlow({ member, watchId }: Props) {
   })
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null) => {
-    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId })
+  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string) => {
+    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId, manualName })
     setScreen('scenario')
   }
 

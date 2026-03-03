@@ -21,6 +21,7 @@ export interface AirtableSelect {
   watchId: string
   completeCondition: string | null
   manualRecordId: string | null
+  manualName: string
 }
 
 // === Screens ===

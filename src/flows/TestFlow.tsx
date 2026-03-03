@@ -13,20 +13,21 @@ interface Props {
 }
 
 export function TestFlow({ member, watchId }: Props) {
-  const [screen, setScreen] = useState<Screen>(member && watchId ? 'quiz-setup' : 'select')
+  const [screen, setScreen] = useState<Screen>('select')
   const [airtableSelect, setAirtableSelect] = useState<AirtableSelect>({
     memberId: '',
     watchId: '',
     completeCondition: null,
     manualRecordId: null,
+    manualName: '',
   })
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
   const [quizAnswers, setQuizAnswers] = useState<(number | null)[]>([])
   const [quizLoading, setQuizLoading] = useState(false)
   const [quizError, setQuizError] = useState('')
 
-  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null) => {
-    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId })
+  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string) => {
+    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId, manualName })
     if (manualRecordId) {
       autoGenerateQuiz(manualRecordId)
     } else {

@@ -50,6 +50,9 @@ export function QuizResult({ questions, answers, airtableSelect, onRestart }: Pr
       <div className="max-w-3xl mx-auto space-y-8">
         {/* スコア表示 */}
         <div className="text-center py-10">
+          {airtableSelect.manualName && (
+            <p className="text-gray-400 text-sm mb-4">{airtableSelect.manualName}</p>
+          )}
           <div className={`inline-flex items-center justify-center w-28 h-28 rounded-full mb-6 text-5xl font-black ${
             passed ? 'bg-green-500/10 text-green-400' : 'bg-orange-500/10 text-orange-400'
           }`}>

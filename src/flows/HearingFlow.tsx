@@ -10,16 +10,17 @@ interface Props {
 }
 
 export function HearingFlow({ member, watchId }: Props) {
-  const [screen, setScreen] = useState<Screen>(member && watchId ? 'coming-soon' : 'select')
+  const [screen, setScreen] = useState<Screen>('select')
   const [, setAirtableSelect] = useState<AirtableSelect>({
     memberId: '',
     watchId: '',
     completeCondition: null,
     manualRecordId: null,
+    manualName: '',
   })
 
-  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null) => {
-    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId })
+  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string) => {
+    setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId, manualName })
     setScreen('coming-soon')
   }
 
