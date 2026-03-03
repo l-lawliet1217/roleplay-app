@@ -26,7 +26,6 @@ export function PresentationFlow({ member, watchId }: Props) {
     slidesUrl: '',
     totalPages: 5,
     description: '',
-    apiKey: '',
   })
   const [messages, setMessages] = useState<ChatMessage[]>([])
 

@@ -48,7 +48,6 @@ export interface AppConfig {
   slidesUrl: string
   totalPages: number
   description: string
-  apiKey: string
 }
 
 export interface ChatMessage {

@@ -54,7 +54,6 @@ export function ScoreCard({ messages, config, airtableSelect, onRestart }: Props
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            apiKey: config.apiKey,
             conversation: conversationText,
             scenario: config.scenario,
           }),

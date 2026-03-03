@@ -11,7 +11,6 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
   const [slidesUrl, setSlidesUrl] = useState(config.slidesUrl)
   const [totalPages, setTotalPages] = useState(config.totalPages)
   const [description, setDescription] = useState(config.description)
-  const [apiKey, setApiKey] = useState(config.apiKey)
   const [error, setError] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -26,12 +25,8 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
       setError('有効なGoogle SlidesのURLを入力してください')
       return
     }
-    if (!apiKey.trim()) {
-      setError('Anthropic API Keyを入力してください')
-      return
-    }
 
-    onComplete({ slidesUrl, totalPages, description, apiKey })
+    onComplete({ slidesUrl, totalPages, description })
   }
 
   const scenarioLabel = config.scenario === 'sales' ? '営業プレゼン' : '報告プレゼン'
@@ -47,7 +42,7 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
           onClick={onBack}
           className="text-gray-400 hover:text-white text-sm mb-6 flex items-center gap-1 transition-colors"
         >
-          ← シナリオ選択に戻る
+          ← マニュアル選択に戻る
         </button>
 
         <div className="bg-[#1e1e3a] rounded-2xl border border-[#2d2d5a] p-8">
@@ -107,22 +102,6 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
               />
               <p className="text-xs text-gray-500 mt-1">
                 AIクライアントがより適切な質問をするための参考情報です
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Anthropic API Key <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
-                placeholder="sk-ant-..."
-                className="w-full bg-[#12122a] border border-[#3d3d6a] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Claude APIを呼び出すために必要です。ブラウザからサーバー経由で使用されます。
               </p>
             </div>
 

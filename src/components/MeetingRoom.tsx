@@ -89,7 +89,6 @@ export function MeetingRoom({ config, onEnd }: Props) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            apiKey: config.apiKey,
             systemPrompt: buildSystemPrompt(
               config,
               currentPage,
