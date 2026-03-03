@@ -29,10 +29,10 @@ export function PresentationFlow({ member, watchId }: Props) {
   })
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string, manualType: string | null) => {
+  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string, manualType: string | null, outputUrl: string | null) => {
     setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId, manualName })
     const scenario: Scenario = manualType === '営業' ? 'sales' : 'report'
-    setConfig(prev => ({ ...prev, scenario }))
+    setConfig(prev => ({ ...prev, scenario, slidesUrl: outputUrl || '' }))
     setScreen('setup')
   }
 

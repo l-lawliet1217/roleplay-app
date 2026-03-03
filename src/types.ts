@@ -15,6 +15,7 @@ export interface AirtableWatch {
   completeCondition: string | null
   manualRecordId: string | null
   manualType: string | null
+  outputUrl: string | null
 }
 
 export interface AirtableSelect {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AppConfig } from '../types'
 
 interface Props {
@@ -12,6 +12,21 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
   const [totalPages, setTotalPages] = useState(config.totalPages)
   const [description, setDescription] = useState(config.description)
   const [error, setError] = useState('')
+  const [pageCountLoading, setPageCountLoading] = useState(false)
+
+  // slidesUrl が Google Slides の場合、枚数を自動取得
+  useEffect(() => {
+    if (!slidesUrl || !slidesUrl.includes('docs.google.com/presentation')) return
+
+    setPageCountLoading(true)
+    fetch(`/api/slides-page-count?url=${encodeURIComponent(slidesUrl)}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.pageCount) setTotalPages(data.pageCount)
+      })
+      .catch(() => {})
+      .finally(() => setPageCountLoading(false))
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +93,7 @@ export function SetupForm({ config, onComplete, onBack }: Props) {
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
                 スライド枚数
+                {pageCountLoading && <span className="text-gray-500 ml-2">取得中...</span>}
               </label>
               <input
                 type="number"

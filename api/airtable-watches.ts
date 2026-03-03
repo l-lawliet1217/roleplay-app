@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const filter = encodeURIComponent(`FIND("${memberName}", ARRAYJOIN({FullNameFromMember}))`)
-    const fields = ['FullNameFromMember', 'ManualNameFromManual', 'TestScore', 'CompletionConditionsByManual', 'RecordIDByManual', 'ManualCategoryFromManual']
+    const fields = ['FullNameFromMember', 'ManualNameFromManual', 'TestScore', 'CompletionConditionsByManual', 'RecordIDByManual', 'ManualCategoryFromManual', 'OutputUrlFromManual']
       .map(f => `fields%5B%5D=${encodeURIComponent(f)}`)
       .join('&')
     const url = `https://api.airtable.com/v0/${BASE_ID}/${WATCH_TABLE_ID}?filterByFormula=${filter}&${fields}`
@@ -56,6 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         completeCondition: (r.fields.CompletionConditionsByManual || [null])[0] ?? null,
         manualRecordId: (r.fields.RecordIDByManual || [null])[0] ?? null,
         manualType,
+        outputUrl: (r.fields.OutputUrlFromManual || [null])[0] ?? null,
       }
     })
 
