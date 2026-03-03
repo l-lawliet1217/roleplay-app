@@ -14,6 +14,7 @@ export interface AirtableWatch {
   score: number | null
   completeCondition: string | null
   manualRecordId: string | null
+  manualType: string | null
 }
 
 export interface AirtableSelect {

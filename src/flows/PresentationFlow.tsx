@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import type { AppConfig, ChatMessage, Scenario, AirtableSelect } from '../types'
 import { MemberSelect } from '../components/MemberSelect'
-import { ScenarioSelect } from '../components/ScenarioSelect'
 import { SetupForm } from '../components/SetupForm'
 import { MeetingRoom } from '../components/MeetingRoom'
 import { ScoreCard } from '../components/ScoreCard'
 
-type Screen = 'select' | 'scenario' | 'setup' | 'meeting' | 'score'
+type Screen = 'select' | 'setup' | 'meeting' | 'score'
 
 interface Props {
   member: string | null
@@ -31,12 +30,9 @@ export function PresentationFlow({ member, watchId }: Props) {
   })
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string) => {
+  const handleMemberSelect = (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string, manualType: string | null) => {
     setAirtableSelect({ memberId, watchId, completeCondition, manualRecordId, manualName })
-    setScreen('scenario')
-  }
-
-  const handleScenarioSelect = (scenario: Scenario) => {
+    const scenario: Scenario = manualType === '営業' ? 'sales' : 'report'
     setConfig(prev => ({ ...prev, scenario }))
     setScreen('setup')
   }
@@ -66,15 +62,11 @@ export function PresentationFlow({ member, watchId }: Props) {
         />
       )}
 
-      {screen === 'scenario' && (
-        <ScenarioSelect onSelect={handleScenarioSelect} />
-      )}
-
       {screen === 'setup' && (
         <SetupForm
           config={config}
           onComplete={handleSetupComplete}
-          onBack={() => setScreen('scenario')}
+          onBack={() => setScreen('select')}
         />
       )}
 

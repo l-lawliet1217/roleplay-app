@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import type { AirtableMember, AirtableWatch } from '../types'
 
 interface Props {
-  onSelect: (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string) => void
+  onSelect: (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null, manualName: string, manualType: string | null) => void
   filterCondition?: string
   initialMember?: string | null
   initialWatchId?: string | null
@@ -75,7 +75,7 @@ export function MemberSelect({ onSelect, filterCondition, initialMember, initial
     if (qMember && qWatchId && selectedMemberId && selectedWatchId && !autoSelected) {
       setAutoSelected(true)
       const w = getSelectedWatch()
-      onSelect(selectedMemberId, selectedWatchId, w?.completeCondition ?? null, w?.manualRecordId ?? null, w?.manualName ?? '')
+      onSelect(selectedMemberId, selectedWatchId, w?.completeCondition ?? null, w?.manualRecordId ?? null, w?.manualName ?? '', w?.manualType ?? null)
     }
   }, [selectedMemberId, selectedWatchId])
 
@@ -91,7 +91,7 @@ export function MemberSelect({ onSelect, filterCondition, initialMember, initial
       const member = members.find(m => m.id === selectedMemberId)
       if (member) updateUrlParams(member.name, selectedWatchId)
       const w = getSelectedWatch()
-      onSelect(selectedMemberId, selectedWatchId, w?.completeCondition ?? null, w?.manualRecordId ?? null, w?.manualName ?? '')
+      onSelect(selectedMemberId, selectedWatchId, w?.completeCondition ?? null, w?.manualRecordId ?? null, w?.manualName ?? '', w?.manualType ?? null)
     }
   }
 
