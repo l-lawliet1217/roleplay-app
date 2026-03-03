@@ -44,11 +44,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { apiKey, conversation, scenario } = req.body
-
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return res.status(400).json({ error: 'API key is required' })
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' })
   }
+
+  const { conversation, scenario } = req.body
 
   const scenarioContext =
     scenario === 'sales'

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import type { AppConfig, ChatMessage, ScoreResult } from '../types'
+import type { AppConfig, ChatMessage, ScoreResult, AirtableSelect } from '../types'
 
 interface Props {
   messages: ChatMessage[]
   config: AppConfig
+  airtableSelect: AirtableSelect
   onRestart: () => void
 }
 
@@ -34,7 +35,7 @@ function getScoreLabel(score: number): string {
   return '要練習'
 }
 
-export function ScoreCard({ messages, config, onRestart }: Props) {
+export function ScoreCard({ messages, config, airtableSelect, onRestart }: Props) {
   const [scores, setScores] = useState<ScoreResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -76,6 +77,27 @@ export function ScoreCard({ messages, config, onRestart }: Props) {
         }
 
         setScores(parsed)
+
+        // Airtableにスコアを保存
+        if (airtableSelect.watchId) {
+          fetch('/api/airtable-save-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              watchRecordId: airtableSelect.watchId,
+              score: parsed.scores.overall.score,
+            }),
+          })
+            .then(async r => {
+              if (!r.ok) {
+                const d = await r.json().catch(() => ({}))
+                console.error('Airtable save failed:', d.error || r.status)
+              }
+            })
+            .catch(err => console.error('Airtable save error:', err))
+        } else {
+          console.warn('watchId is empty, skipping score save')
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '採点に失敗しました')
       } finally {
