@@ -76,8 +76,11 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: contentData.content }),
       })
+      if (!quizRes.ok) {
+        const err = await quizRes.json().catch(() => ({}))
+        throw new Error(err.error || 'テスト生成に失敗しました')
+      }
       const data = await quizRes.json()
-      if (!quizRes.ok) throw new Error(data.error || 'テスト生成に失敗しました')
       setQuizQuestions(data.questions)
       setScreen('quiz-play')
 

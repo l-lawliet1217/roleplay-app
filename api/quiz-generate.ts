@@ -60,16 +60,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const allQuestions = JSON.parse(jsonMatch[0])
 
     // 正解が単独最長の問題を除外（「一番長いのを選べば正解」対策）
+    // 正解が2番目以下の長さ → OK、正解が最長でも差が小さい → OK
     const filtered = allQuestions.filter((q: any) => {
-      const lengths = q.options.map((o: string) => o.length)
+      if (!q.options || !Array.isArray(q.options) || q.options.length !== 4) return false
+      const lengths = q.options.map((o: string) => (o || '').length)
       const maxLen = Math.max(...lengths)
       const correctLen = lengths[q.correctIndex]
-      if (correctLen < maxLen) return true // 正解が最長でなければOK
-      // 正解と同じ長さの選択肢が他にもあればOK（単独最長でなければ許容）
-      return lengths.filter((l: number) => l === maxLen).length >= 2
+      if (correctLen < maxLen) return true
+      // 正解が最長でも、2番目との差が20%以内なら許容
+      const sorted = [...lengths].sort((a, b) => b - a)
+      if (sorted[1] > 0 && (maxLen - sorted[1]) / sorted[1] <= 0.2) return true
+      return false
     })
 
-    const questions = filtered.slice(0, QUIZ_COUNT)
+    // フィルタ通過分が足りなければフィルタなしで補充
+    const questions = filtered.length >= QUIZ_COUNT
+      ? filtered.slice(0, QUIZ_COUNT)
+      : [...filtered, ...allQuestions.filter((q: any) => !filtered.includes(q))].slice(0, QUIZ_COUNT)
+
     if (questions.length < QUIZ_COUNT) {
       return res.status(500).json({ error: `問題の生成数が不足しています（${questions.length}/${QUIZ_COUNT}問）` })
     }
