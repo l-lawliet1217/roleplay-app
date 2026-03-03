@@ -3,18 +3,20 @@ import type { AirtableMember, AirtableWatch } from '../types'
 
 interface Props {
   onSelect: (memberId: string, watchId: string, completeCondition: string | null, manualRecordId: string | null) => void
+  filterCondition?: string
+  initialMember?: string | null
+  initialWatchId?: string | null
 }
 
-export function MemberSelect({ onSelect }: Props) {
-  const params = new URLSearchParams(window.location.search)
-  const qMember = params.get('member') || ''
-  const qWatchId = params.get('watchId') || ''
+export function MemberSelect({ onSelect, filterCondition, initialMember, initialWatchId }: Props) {
+  const qMember = initialMember || ''
+  const qWatchId = initialWatchId || ''
 
   const [members, setMembers] = useState<AirtableMember[]>([])
   const [watches, setWatches] = useState<AirtableWatch[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedWatchId, setSelectedWatchId] = useState('')
-  const [conditionFilter, setConditionFilter] = useState<string>('all')
+  const [conditionFilter, setConditionFilter] = useState<string>(filterCondition || 'all')
   const [loading, setLoading] = useState(true)
   const [watchLoading, setWatchLoading] = useState(false)
   const [error, setError] = useState('')
@@ -101,6 +103,8 @@ export function MemberSelect({ onSelect }: Props) {
     )
   }
 
+  const showFilter = !filterCondition
+
   return (
     <div className="min-h-full flex items-center justify-center bg-gradient-to-br from-[#0f0f23] to-[#1a1a3e] p-6">
       <div className="max-w-lg w-full">
@@ -138,29 +142,31 @@ export function MemberSelect({ onSelect }: Props) {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               マニュアル
             </label>
-            <div className="flex gap-2 mb-3">
-              {[
-                { key: 'all', label: 'すべて' },
-                { key: 'テスト', label: 'テスト' },
-                { key: 'プレゼン', label: 'プレゼン' },
-                { key: 'ヒアリング', label: 'ヒアリング' },
-              ].map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => {
-                    setConditionFilter(f.key)
-                    setSelectedWatchId('')
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    conditionFilter === f.key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-[#1e1e3a] text-gray-400 hover:text-white border border-[#2d2d5a]'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+            {showFilter && (
+              <div className="flex gap-2 mb-3">
+                {[
+                  { key: 'all', label: 'すべて' },
+                  { key: 'テスト', label: 'テスト' },
+                  { key: 'プレゼン', label: 'プレゼン' },
+                  { key: 'ヒアリング', label: 'ヒアリング' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => {
+                      setConditionFilter(f.key)
+                      setSelectedWatchId('')
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      conditionFilter === f.key
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-[#1e1e3a] text-gray-400 hover:text-white border border-[#2d2d5a]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
             {watchLoading ? (
               <p className="text-gray-500 text-sm p-3">読み込み中...</p>
             ) : (
