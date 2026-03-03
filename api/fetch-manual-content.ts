@@ -8,6 +8,35 @@ function extractDocId(url: string): string | null {
   return match ? match[1] : null
 }
 
+async function getGoogleAccessToken(): Promise<string> {
+  const clientId = process.env.GOOGLE_CLIENT_ID
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error('Google OAuth credentials are not configured')
+  }
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`Failed to refresh Google access token: ${error}`)
+  }
+
+  const data = await res.json()
+  return data.access_token
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -52,14 +81,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'このマニュアルにはTextUrlが設定されていません' })
     }
 
-    // 2. Google Docsからテキストをエクスポート
+    // 2. Google Docsからテキストをエクスポート（認証付き）
     const docId = extractDocId(textUrl)
     if (!docId) {
       return res.status(400).json({ error: 'Google Docs URLの解析に失敗しました' })
     }
 
+    const accessToken = await getGoogleAccessToken()
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`
-    const docRes = await fetch(exportUrl)
+    const docRes = await fetch(exportUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
     if (!docRes.ok) {
       throw new Error(`Google Docs fetch error: ${docRes.status}`)
