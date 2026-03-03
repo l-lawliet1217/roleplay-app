@@ -1,7 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-const SYSTEM_PROMPT = `あなたは高度な教育専門家です。提供されたテキストに基づき、非常に難易度の高い4択クイズを21問生成してください。
+const QUIZ_COUNT = 20
+
+const SYSTEM_PROMPT = `あなたは高度な教育専門家です。提供されたテキストに基づき、非常に難易度の高い4択クイズを必ず25問生成してください。25問ちょうど生成すること。
 【難易度】非常に高い。文脈理解や論理的推論が必要。
 【選択肢のルール】
 - 4つの選択肢はすべて同程度の長さ・詳しさにすること。正解だけが長い・詳しいのは禁止。
@@ -40,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       max_tokens: 8192,
       system: SYSTEM_PROMPT,
       messages: [
-        { role: 'user', content: `以下のテキストから4択クイズを21問生成してください。\n\n${truncatedText}` },
+        { role: 'user', content: `以下のテキストから4択クイズを25問生成してください。\n\n${truncatedText}` },
         { role: 'assistant', content: '[' },
       ],
     })
@@ -54,9 +56,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to parse quiz questions' })
     }
 
-    const questions = JSON.parse(jsonMatch[0]).slice(0, 20)
-    if (questions.length < 15) {
-      return res.status(500).json({ error: `問題の生成数が不足しています（${questions.length}問）` })
+    const allQuestions = JSON.parse(jsonMatch[0])
+    const questions = allQuestions.slice(0, QUIZ_COUNT)
+    if (questions.length < QUIZ_COUNT) {
+      return res.status(500).json({ error: `問題の生成数が不足しています（${questions.length}/${QUIZ_COUNT}問）` })
     }
     res.status(200).json({ questions })
   } catch (error: any) {
