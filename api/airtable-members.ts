@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     // sort needs special handling
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${MEMBER_TABLE_ID}?filterByFormula=${encodeURIComponent('Resignation=FALSE()')}&fields%5B%5D=FullName&sort%5B0%5D%5Bfield%5D=FullName&sort%5B0%5D%5Bdirection%5D=asc`
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${MEMBER_TABLE_ID}?filterByFormula=${encodeURIComponent('Resignation=FALSE()')}&fields%5B%5D=FullName&fields%5B%5D=JobType&sort%5B0%5D%5Bfield%5D=FullName&sort%5B0%5D%5Bdirection%5D=asc`
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${pat}` },
@@ -35,7 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const members = data.records.map((r: any) => ({
       id: r.id,
       name: r.fields.FullName || '',
+      jobType: r.fields.JobType || '',
     }))
+    members.sort((a: any, b: any) => {
+      const aDirector = a.jobType === '役員' ? 0 : 1
+      const bDirector = b.jobType === '役員' ? 0 : 1
+      if (aDirector !== bDirector) return aDirector - bDirector
+      return a.name.localeCompare(b.name, 'ja')
+    })
 
     res.status(200).json({ members })
   } catch (error: any) {

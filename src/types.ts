@@ -5,6 +5,7 @@ export type TrainingMode = 'presentation' | 'hearing' | 'quiz'
 export interface AirtableMember {
   id: string
   name: string
+  jobType: string
 }
 
 export interface AirtableWatch {

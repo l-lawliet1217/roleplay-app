@@ -14,6 +14,7 @@ export function MemberSelect({ onSelect }: Props) {
   const [watches, setWatches] = useState<AirtableWatch[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedWatchId, setSelectedWatchId] = useState('')
+  const [conditionFilter, setConditionFilter] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [watchLoading, setWatchLoading] = useState(false)
   const [error, setError] = useState('')
@@ -62,6 +63,10 @@ export function MemberSelect({ onSelect }: Props) {
       .finally(() => setWatchLoading(false))
   }, [selectedMemberId])
 
+  const filteredWatches = conditionFilter === 'all'
+    ? watches
+    : watches.filter(w => w.completeCondition?.includes(conditionFilter))
+
   const getSelectedWatch = () => watches.find(w => w.id === selectedWatchId)
 
   useEffect(() => {
@@ -72,8 +77,17 @@ export function MemberSelect({ onSelect }: Props) {
     }
   }, [selectedMemberId, selectedWatchId])
 
+  const updateUrlParams = (memberName: string, watchId: string) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('member', memberName)
+    url.searchParams.set('watchId', watchId)
+    window.history.replaceState({}, '', url.toString())
+  }
+
   const handleStart = () => {
     if (selectedMemberId && selectedWatchId) {
+      const member = members.find(m => m.id === selectedMemberId)
+      if (member) updateUrlParams(member.name, selectedWatchId)
       const w = getSelectedWatch()
       onSelect(selectedMemberId, selectedWatchId, w?.completeCondition ?? null, w?.manualRecordId ?? null)
     }
@@ -124,6 +138,29 @@ export function MemberSelect({ onSelect }: Props) {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               マニュアル
             </label>
+            <div className="flex gap-2 mb-3">
+              {[
+                { key: 'all', label: 'すべて' },
+                { key: 'テスト', label: 'テスト' },
+                { key: 'プレゼン', label: 'プレゼン' },
+                { key: 'ヒアリング', label: 'ヒアリング' },
+              ].map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => {
+                    setConditionFilter(f.key)
+                    setSelectedWatchId('')
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    conditionFilter === f.key
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-[#1e1e3a] text-gray-400 hover:text-white border border-[#2d2d5a]'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
             {watchLoading ? (
               <p className="text-gray-500 text-sm p-3">読み込み中...</p>
             ) : (
@@ -136,7 +173,7 @@ export function MemberSelect({ onSelect }: Props) {
                 <option value="">
                   {selectedMemberId ? '選択してください' : 'メンバーを先に選択'}
                 </option>
-                {watches.map(w => (
+                {filteredWatches.map(w => (
                   <option key={w.id} value={w.id}>
                     {w.manualName}
                   </option>
