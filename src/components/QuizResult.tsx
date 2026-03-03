@@ -17,6 +17,7 @@ export function QuizResult({ questions, answers, airtableSelect, onRestart }: Pr
   const passed = percentage >= 90
 
   useEffect(() => {
+    console.log('QuizResult: airtableSelect =', JSON.stringify(airtableSelect), 'score =', percentage)
     if (!airtableSelect.watchId) {
       setSaveStatus('skipped')
       console.warn('watchId is empty, skipping score save')
@@ -67,6 +68,12 @@ export function QuizResult({ questions, answers, airtableSelect, onRestart }: Pr
           )}
           {saveStatus === 'error' && (
             <p className="text-xs text-red-400 mt-4">スコア保存に失敗: {saveError}</p>
+          )}
+          {saveStatus === 'skipped' && (
+            <p className="text-xs text-yellow-400 mt-4">スコア保存スキップ（watchId未設定）</p>
+          )}
+          {saveStatus === 'saving' && (
+            <p className="text-xs text-gray-500 mt-4">スコアを保存中...</p>
           )}
         </div>
 
