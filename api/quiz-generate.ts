@@ -1,6 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
+const GEMINI_MODEL = 'gemini-2.5-flash'
 const QUIZ_COUNT = 20
 
 const SYSTEM_PROMPT = `あなたは高度な教育専門家です。提供されたテキストに基づき、非常に難易度の高い4択クイズを必ず30問生成してください。30問ちょうど生成すること。
@@ -20,9 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' })
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
   }
 
   const { text } = req.body
@@ -35,20 +35,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : text
 
   try {
-    const client = new Anthropic({ apiKey, maxRetries: 1 })
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `以下のテキストから4択クイズを30問生成してください。不正解の選択肢も正解と同程度の詳しさにしてください。\n\n${truncatedText}` }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 12000,
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    )
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 12000,
-      system: SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: `以下のテキストから4択クイズを30問生成してください。不正解の選択肢も正解と同程度の詳しさにしてください。\n\n${truncatedText}` },
-        { role: 'assistant', content: '[' },
-      ],
-    })
+    if (!response.ok) {
+      const body = await response.text()
+      throw new Error(`Gemini API error: ${response.status} ${body}`)
+    }
 
-    const textBlock = response.content.find(b => b.type === 'text')
-    const raw = '[' + (textBlock?.text || ']')
+    const data = await response.json()
+    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+
+    // コードブロック除去
+    raw = raw.replace(/^```json\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
 
     // JSON部分を抽出
     const jsonMatch = raw.match(/\[[\s\S]*\]/)
@@ -78,6 +95,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json({ questions })
   } catch (error: any) {
     console.error('Quiz generate error:', error)
-    res.status(500).json({ error: error.message || 'Internal server error' })
+    res.status(500).json({ error: 'テストの生成に失敗しました。もう一度お試しください。' })
   }
 }
