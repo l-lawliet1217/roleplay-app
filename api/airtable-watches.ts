@@ -34,19 +34,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fields = ['FullNameFromMember', 'ManualNameFromManual', 'TestScore', 'CompletionConditionsByManual', 'RecordIDByManual', 'ManualCategoryFromManual', 'OutputUrlFromManual']
       .map(f => `fields%5B%5D=${encodeURIComponent(f)}`)
       .join('&')
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${WATCH_TABLE_ID}?filterByFormula=${filter}&${fields}`
+    const baseUrl = `https://api.airtable.com/v0/${BASE_ID}/${WATCH_TABLE_ID}?filterByFormula=${filter}&${fields}`
 
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${pat}` },
-    })
+    const allRecords: any[] = []
+    let offset: string | undefined
 
-    if (!response.ok) {
-      const body = await response.text()
-      throw new Error(`Airtable API error: ${response.status} ${body}`)
-    }
+    do {
+      const url = offset ? `${baseUrl}&offset=${offset}` : baseUrl
+      const response = await fetch(url, { headers: { Authorization: `Bearer ${pat}` } })
 
-    const data = await response.json()
-    const watches = data.records.map((r: any) => {
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`Airtable API error: ${response.status} ${body}`)
+      }
+
+      const data = await response.json()
+      allRecords.push(...data.records)
+      offset = data.offset
+    } while (offset)
+
+    const watches = allRecords.map((r: any) => {
       const catIds: string[] = r.fields.ManualCategoryFromManual || []
       const manualType = catIds.length > 0 ? (categoryTypeMap[catIds[0]] || null) : null
       return {
