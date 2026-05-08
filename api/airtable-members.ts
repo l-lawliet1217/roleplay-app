@@ -20,19 +20,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sort: encodeURIComponent('[{"field":"FullName","direction":"asc"}]'),
     })
 
-    // sort needs special handling
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${MEMBER_TABLE_ID}?filterByFormula=${encodeURIComponent('Resignation=FALSE()')}&fields%5B%5D=FullName&fields%5B%5D=JobType&sort%5B0%5D%5Bfield%5D=FullName&sort%5B0%5D%5Bdirection%5D=asc`
+    const baseUrl = `https://api.airtable.com/v0/${BASE_ID}/${MEMBER_TABLE_ID}?filterByFormula=${encodeURIComponent('Resignation=FALSE()')}&fields%5B%5D=FullName&fields%5B%5D=JobType&sort%5B0%5D%5Bfield%5D=FullName&sort%5B0%5D%5Bdirection%5D=asc`
 
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${pat}` },
-    })
+    const allRecords: any[] = []
+    let offset: string | undefined
 
-    if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.status}`)
-    }
+    do {
+      const url = offset ? `${baseUrl}&offset=${offset}` : baseUrl
+      const response = await fetch(url, { headers: { Authorization: `Bearer ${pat}` } })
 
-    const data = await response.json()
-    const members = data.records.map((r: any) => ({
+      if (!response.ok) {
+        throw new Error(`Airtable API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      allRecords.push(...data.records)
+      offset = data.offset
+    } while (offset)
+
+    const members = allRecords.map((r: any) => ({
       id: r.id,
       name: r.fields.FullName || '',
       jobType: r.fields.JobType || '',
